@@ -1,29 +1,40 @@
 import { MyContext } from './MyContext.jsx';
-import { useContext, useEffect, useState } from 'react';
-import { RingLoader } from "react-spinners";
+import { useContext, useEffect, useRef, useState } from 'react';
+import { ScaleLoader } from "react-spinners";
 
 const ChatInput = () => {
-
-    const { prompt, setPrompt, reply, setReply, currThreadId, prevChats, setPrevChats } = useContext(MyContext);
+    const { prompt, setPrompt, reply, setReply, prevChats, setPrevChats } = useContext(MyContext);
     const [loading, setLoading] = useState(false);
+    const textareaRef = useRef(null);
 
-    function handleChange(event) {
-        setPrompt(event.target.value)
-    }
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        }
+    }, [prompt]);
 
-    function handleKeyDown(event) {
-        event.key === "Enter" ? getReply() : ''
-    }
+    const handleChange = (event) => {
+        setPrompt(event.target.value);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            getReply();
+        }
+    };
 
     const getReply = async () => {
         if (!prompt.trim()) return;
+
         const userPrompt = prompt;
         setPrompt("");
         setLoading(true);
-        setPrevChats(prev => ([
-            ...prev,
-            { role: "user", content: userPrompt }
-        ]));
+
+        // Add user message to chat
+        setPrevChats(prev => ([...prev, { role: "user", content: userPrompt }]));
+
         try {
             const response = await fetch(
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
@@ -34,98 +45,64 @@ const ChatInput = () => {
                         "x-goog-api-key": import.meta.env.VITE_GEMINI_API_KEY
                     },
                     body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [{ text: userPrompt }]
-                            }
-                        ]
+                        contents: [{ parts: [{ text: userPrompt }] }]
                     })
                 }
             );
+
             const data = await response.json();
             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+            // Add AI reply to chat
             setReply(text);
-            setPrevChats(prev => ([
-                ...prev,
-                { role: "assistant", content: text }
-            ]))
+            setPrevChats(prev => ([...prev, { role: "assistant", content: text }]));
         } catch (error) {
-            console.log(error);
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    useEffect(() => {
-        if (prompt && reply) {
-            setPrevChats(prevChats => (
-                [...prevChats, {
-                    role: "user",
-                    content: prompt
-                }, {
-                    role: "assistant",
-                    content: reply
-                }]
-            ));
-        }
-        setPrompt("");
-    }, [reply]);
-
     return (
-
-        <div className='bg-gray-100 flex flex-col h-full py-10'>
+        <div className='bg-gray-100 flex flex-col h-full py-14'>
             <div className='text-center w-full'>
-
                 <div className='flex justify-center p-4'>
-                    <RingLoader loading={loading} />
+                    <ScaleLoader loading={loading} />
                 </div>
-
                 <div className='w-full flex items-center justify-center pb-6'>
-                    <div>
-                        <img src='Rotating_earth.gif' className='w-10 h-10 mr-2' />
-                    </div>
-                    <div>
-                        <p className='text-black text-4xl'>Meet Planet, your personal AI assistant</p>
-                    </div>
+                    <img src='/Rotating_earth.gif' className='h-10 w-10 mr-4' />
+                    <p className='text-black text-4xl'>Meet Planet, your personal AI assistant</p>
                 </div>
-
-                <div className='w-full max-w-3xl mx-auto'>
+                <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl 
+                    px-4 py-2 shadow-sm max-w-3xl mx-auto">
+                    <button className='h-10 w-10 text-gray-600 hover:bg-gray-100 text-md hover:rounded-full cursor-pointer'>
+                        <i className="fa-solid fa-paperclip"></i>
+                    </button>
 
                     <textarea
-                        type='text'
-                        placeholder='Ask anything...'
+                        rows={1}
+                        ref={textareaRef}
                         value={prompt}
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
-                        className='shadow rounded-3xl w-full max-w-2xl h-24 p-4 max-h-150 bg-white focus:outline-none resize-none overflow-y-auto'
-                    />
+                        placeholder="What's on your mind?"
+                        className="flex-1 resize-none border-none outline-none bg-transparent text-gray-900 scrollbar-hide" />
 
-                    <div className='flex items-center justify-between'>
-                        <div className=''>
-                            <button className=' text-gray-500 hover:bg-gray-200 p-2 text-md h-10 w-10 hover:rounded-full cursor-pointer'>
-                                <i className="fa-solid fa-plus"></i>
-                            </button>
-                            <button className=' text-gray-500 hover:bg-gray-200 cursor-pointer p-2 text-md hover:rounded-3xl'>
-                                <i className="fa-solid fa-sliders"></i>
-                                <span className="text-sm font-medium p-0.5">Tools</span>
-                            </button>
-                        </div>
-
-                        <div className=''>
-                            <button className="text-gray-500 hover:text-gray-700 text-xl pr-2">
-                                <i className="fa-solid fa-microphone"></i>
-                            </button>
-                            <button className="text-gray-500 hover:text-gray-700 text-xl pl-2"
-                                onClick={getReply}
-                            >
-                                <i className="fa-solid fa-paper-plane"></i>
-                            </button>
-                        </div>
-
-                    </div>
+                    <button
+                        type="button"
+                        onClick={getReply}
+                        disabled={!prompt.trim()}
+                        className='text-gray-600 hover:bg-gray-200 text-md h-10 w-10 rounded-full cursor-pointer' >
+                        {prompt.trim() === "" ? (
+                            <i className="fa-solid fa-microphone"></i>
+                        ) : (
+                            <i className="fa-solid fa-arrow-up"></i>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default ChatInput;

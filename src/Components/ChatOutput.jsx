@@ -1,57 +1,56 @@
-import React, { useEffect, useState, useContext } from 'react'
+import React, { useEffect, useState, useContext } from 'react';
 import { MyContext } from "./MyContext";
 import ReactMarkdown from "react-markdown";
-import rehypehighlight from "rehype-highlight";
+import rehypeHighlight from "rehype-highlight";
 
 const ChatOutput = () => {
-
-    const { newChat, prevChats, reply } = useContext(MyContext);
-    const [latestReply, setLatestReply] = useState(null);
+    const { prevChats, reply } = useContext(MyContext);
+    const [latestReply, setLatestReply] = useState("");
 
     useEffect(() => {
-        if (!prevChats?.length) return;
+        if (!reply) return;
 
-        const content = reply.split(" ");
-
+        const words = reply.split(" ");
         let idx = 0;
-        const interval = setInterval(() => {
-            setLatestReply(content.slice(0, idx + 1).join(" "));
+        setLatestReply(""); // reset previous animation
 
+        const interval = setInterval(() => {
             idx++;
-            if (idx >= content.length) clearInterval(interval);
+            setLatestReply(words.slice(0, idx).join(" "));
+            if (idx >= words.length) clearInterval(interval);
         }, 50);
 
         return () => clearInterval(interval);
-    }, [prevChats, reply]);
+    }, [reply]);
 
     return (
-        <div className='bg-gray-100'>
-            {newChat && <h1> Start a new Chat</h1>}
-            <div>
-                {
-                    prevChats?.map((chat, idx) =>
-                        <div className={chat.role === "user" ? "userDiv" : "gptDiv"} key={idx}>
-                            {chat.role === "user" ? (
-                                <p className='border-2 bg-sky-100'>{chat.content}</p>
-                            ) : (
-                                <div className='border-2 bg-yellow-100'>
-                                    <ReactMarkdown rehypePlugins={rehypehighlight}>{chat.content}</ReactMarkdown>
-                                </div>
-                            )}
-                        </div>
-                    )
-                }
-
-                {
-                    prevChats.length > 0 && latestReply !== null &&
-                    <div className='gptDiv' key={"typing"}>
-                        <ReactMarkdown rehypePlugins={rehypehighlight}>{latestReply}</ReactMarkdown>
-                    </div>
-                }
-
-            </div>
+        <div className='bg-gray-100 h-full p-4 flex flex-col gap-4'>
+            {prevChats?.map((chat, idx) => (
+                <div
+                    key={idx}
+                    className={`max-w-3xl px-4 py-2 rounded-lg ${chat.role === "user"
+                        ? "self-end bg-sky-100 text-gray-900"
+                        : "self-start bg-yellow-100 text-gray-900"
+                        }`}
+                >
+                    {chat.role === "user" ? (
+                        <p>{chat.content}</p>
+                    ) : (
+                        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                            {chat.content}
+                        </ReactMarkdown>
+                    )}
+                </div>
+            ))}
+            {latestReply && (
+                <div className="self-start max-w-3xl px-4 py-2 rounded-lg bg-yellow-100 text-gray-900">
+                    <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                        {latestReply}
+                    </ReactMarkdown>
+                </div>
+            )}
         </div>
-    )
-}
+    );
+};
 
 export default ChatOutput;
