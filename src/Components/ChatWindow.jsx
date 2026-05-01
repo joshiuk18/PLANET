@@ -5,11 +5,13 @@ import Footer from './Footer.jsx';
 const ChatWindow = () => {
     return (
         <div className="flex flex-col h-full">
+
             <Navbar />
-            <div className="flex-1 overflow-auto">
-                <Chat />
-            </div>
+
+            <Chat />
+
             <Footer />
+
         </div>
     )
 }

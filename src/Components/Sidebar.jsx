@@ -1,8 +1,16 @@
 import { useContext } from "react";
 import { MyContext } from "./MyContext";
+import { v1 as uuidv1 } from "uuid";
 
 function Sidebar({ sidebarOpen, toggleSidebar }) {
-    const { prevChats, setCurrThreadId, setNewChat } = useContext(MyContext);
+    const { setNewChat, setPrompt, setReply, setCurrThreadId } = useContext(MyContext);
+
+    const createNewChat = () => {
+        setNewChat(true);
+        setPrompt("");
+        setReply(null);
+        setCurrThreadId(uuidv1());
+    }
 
     return (
 
@@ -28,8 +36,12 @@ function Sidebar({ sidebarOpen, toggleSidebar }) {
             </div>
 
             <div className="flex flex-col gap-1 p-1">
-                <div className="relative group flex items-center gap-2 mx-2 rounded-xl hover:bg-gray-300 px-2 py-2 cursor-pointer">
-                    <i className="fa-regular fa-pen-to-square"></i>
+                <div
+                    onClick={createNewChat}
+                    className="relative group flex items-center gap-2 mx-2 rounded-xl hover:bg-gray-300 px-2 py-2 cursor-pointer">
+                    <button className="cursor-pointer">
+                        <i className="fa-regular fa-pen-to-square"></i>
+                    </button>
                     {sidebarOpen ? (
                         <span>New Chat</span>
                     ) : (
@@ -96,7 +108,7 @@ function Sidebar({ sidebarOpen, toggleSidebar }) {
                 </div>
             </div>
             {sidebarOpen && (
-                <div className="flex-1 p-4 gap-2 border">
+                <div className="flex-1 p-4 gap-2">
                     <p className="font-semibold">Your Chats</p>
                     <ul className="text-sm">
                         <li>Thread 1</li>

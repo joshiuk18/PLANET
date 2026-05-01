@@ -3,15 +3,17 @@ import { useState, useMemo } from "react";
 import Sidebar from './Components/Sidebar.jsx';
 import ChatWindow from './Components/ChatWindow.jsx';
 import { MyContext } from './Components/MyContext.jsx';
-import { v4 as uuidv4 } from "uuid";
+import { v1 as uuidv1 } from "uuid";
 
 function App() {
 
-  const [prompt, setPrompt] = useState("");
-  const [reply, setReply] = useState("");
-  const [currThreadId, setCurrThreadId] = useState(uuidv4());
+  const [prompt, setPrompt] = useState("");  //userinput
+  const [reply, setReply] = useState("");    //Aireply
+
+  const [currThreadId, setCurrThreadId] = useState(uuidv1());
   const [prevChats, setPrevChats] = useState([]);
   const [newChat, setNewChat] = useState(true);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   function toggleSidebar() {
